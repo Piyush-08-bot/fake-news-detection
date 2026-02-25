@@ -46,10 +46,21 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* 1. Global Theme Enforcement - Pure White / Light Grey */
-    html, body, [class*="css"] {
+    html, body, [class*="css"], [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         font-family: 'Inter', sans-serif !important;
         background-color: #f9fafb !important; /* Tailwind Gray-50 */
         color: #030712 !important; /* Nearly black */
+    }
+
+    [data-testid="stAppViewContainer"]::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #f9fafb !important;
+        z-index: -1;
     }
 
     /* 2. Hide Streamlit defaults except sidebar toggle */
