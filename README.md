@@ -1,8 +1,9 @@
-# Fake News Detection System
+# 📰 Fake News Detection System
 
 A modern, interactive machine learning application that analyzes the credibility of news articles using classical NLP techniques and Logistic Regression.
-<img width="968" height="763" alt="Image1" src="https://github.com/user-attachments/assets/dcbbf72b-bf46-4d8e-83cd-d785dfa77f8c" />
-<img width="928" height="684" alt="Image2" src="https://github.com/user-attachments/assets/f7879ab6-6043-48f7-9c81-2cf27fe53a6d" />
+
+![Project Preview](https://github.com/user-attachments/assets/dcbbf72b-bf46-4d8e-83cd-d785dfa77f8c)
+![Dashboard Preview](https://github.com/user-attachments/assets/f7879ab6-6043-48f7-9c81-2cf27fe53a6d)
 
 ## Live Demo
 
@@ -10,26 +11,26 @@ A modern, interactive machine learning application that analyzes the credibility
 
 ## Overview
 
-This project delivers an end‑to‑end fake‑news classification workflow. It includes a full training notebook and a polished Streamlit dashboard for real‑time analysis.
+This project delivers an end-to-end fake-news classification workflow. It combines a complete training notebook with a polished Streamlit dashboard for real-time analysis.
 
-- Dataset: ISOT Fake News Dataset (~38,646 articles)
-- Model: TF‑IDF Vectorization + Logistic Regression
-- UI: Streamlit dashboard with visual analytics
+- **Dataset**: ISOT Fake News Dataset (~38,646 articles)
+- **Model**: TF-IDF Vectorization + Logistic Regression
+- **UI**: Streamlit dashboard with visual analytics
 
 ## Features
 
-- Real‑time analysis from pasted text or a URL
-- Confidence and probability visualizations
-- Classifier deep‑dive with ROC, confusion matrix, and feature importance
-- NLP insights into top vocabulary patterns
-- Interactive training notebook
+- **Real-time analysis** from pasted text or a URL
+- **Confidence and probability** visualizations
+- **Classifier deep-dive** with ROC, confusion matrix, and feature importance
+- **NLP insights** into top vocabulary patterns
+- **Interactive training** notebook
 
 ## Tech Stack
 
-- Core: Python 3.x
-- ML/NLP: scikit‑learn, NLTK, pandas, numpy
-- Dashboard: Streamlit, Plotly, Seaborn, Matplotlib
-- UI Components: streamlit‑shadcn‑ui
+- **Core**: Python 3.x
+- **ML/NLP**: scikit-learn, NLTK, pandas, numpy
+- **Dashboard**: Streamlit, Plotly, Seaborn, Matplotlib
+- **UI Components**: streamlit-shadcn-ui
 
 ## Installation
 
@@ -86,4 +87,4 @@ Live demo:
 
 ## Disclaimer
 
-This tool is for educational purposes only. It does not replace professional fact‑checking for real‑world news events.
+This tool is for educational purposes only. It does not replace professional fact-checking for real-world news events.
