@@ -2,8 +2,6 @@
 
 A modern, interactive machine learning application that analyzes the credibility of news articles using classical NLP techniques and Logistic Regression.
 
-![Project Preview](https://github.com/Piyush-08-bot/fake-news-detection/raw/main/preview.png)
-
 ## Live Demo
 
 [fake-news-detection-ml-ai.streamlit.app](https://fake-news-detection-ml-ai.streamlit.app/)
