@@ -1,6 +1,8 @@
 # Fake News Detection System
 
 A modern, interactive machine learning application that analyzes the credibility of news articles using classical NLP techniques and Logistic Regression.
+<img width="968" height="763" alt="Image1" src="https://github.com/user-attachments/assets/dcbbf72b-bf46-4d8e-83cd-d785dfa77f8c" />
+<img width="928" height="684" alt="Image2" src="https://github.com/user-attachments/assets/f7879ab6-6043-48f7-9c81-2cf27fe53a6d" />
 
 ## Live Demo
 
