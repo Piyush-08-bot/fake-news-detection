@@ -1,0 +1,12 @@
+pandas
+numpy
+scikit-learn
+nltk
+joblib
+streamlit
+plotly
+matplotlib
+seaborn
+newspaper3k
+lxml_html_clean
+streamlit-shadcn-ui

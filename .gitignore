@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+build/
+dist/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Streamlit
+.streamlit/config.toml
+# You might want to keep the models if they are small, but standard practice is often to exclude them if they are large or frequent build artifacts.
+# However, for a simple deployment, we often keep them.
+# models/
+
+# Data (Avoid tracking large datasets)
+data/news_cleaned.csv
+data/news_preprocessed.csv
+
+# macOS
+.DS_Store
