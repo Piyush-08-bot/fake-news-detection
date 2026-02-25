@@ -1,85 +1,89 @@
-# 📰 Fake News Detection System
+# Fake News Detection System
 
-A modern, interactive machine learning application designed to detect and analyze the credibility of news articles using classical NLP techniques and Logistic Regression.
+A modern, interactive machine learning application that analyzes the credibility of news articles using classical NLP techniques and Logistic Regression.
 
-![Project Preview](https://github.com/Piyush-08-bot/fake-news-detection/raw/main/preview.png) _(Note: Add your own screenshot here!)_
+![Project Preview](https://github.com/Piyush-08-bot/fake-news-detection/raw/main/preview.png)
 
-## 🚀 Overview
+## Live Demo
 
-This project provides a complete end-to-end pipeline for fake news classification. It combines a rigorous data science workflow in a **Jupyter Notebook** with a premium, user-friendly **Streamlit Dashboard** for real-time analysis.
+[fake-news-detection-ml-ai.streamlit.app](https://fake-news-detection-ml-ai.streamlit.app/)
 
-- **Dataset**: ISOT Fake News Dataset (~40,000 articles)
-- **Model**: TF-IDF Vectorization + Logistic Regression (98.5% Accuracy)
-- **Deployment**: Streamlit Community Cloud
+## Overview
 
-## ✨ Features
+This project delivers an end‑to‑end fake‑news classification workflow. It includes a full training notebook and a polished Streamlit dashboard for real‑time analysis.
 
-- **Real-time Analysis**: Paste text or a URL to get an instant credibility score.
-- **Visual Analytics**: Interactive charts showing confidence levels, word distributions, and probability breakdowns.
-- **Classifier Deep Dive**: Interactive ROC curves and feature importance visualizations.
-- **NLP Insights**: Breakdown of how specific linguistic patterns influence the model's decision.
-- **Interactive Training**: A dedicated Jupyter Notebook for re-training and exploring the data.
+- Dataset: ISOT Fake News Dataset (~38,646 articles)
+- Model: TF‑IDF Vectorization + Logistic Regression
+- UI: Streamlit dashboard with visual analytics
 
-## 🛠️ Tech Stack
+## Features
 
-- **Core**: Python 3.14+
-- **ML/NLP**: Scikit-Learn, NLTK, Pandas, NumPy
-- **Dashboard**: Streamlit, Plotly, Seaborn, Matplotlib
-- **UI Components**: Streamlit-Shadcn-UI
+- Real‑time analysis from pasted text or a URL
+- Confidence and probability visualizations
+- Classifier deep‑dive with ROC, confusion matrix, and feature importance
+- NLP insights into top vocabulary patterns
+- Interactive training notebook
 
-## 📦 Installation
+## Tech Stack
 
-To run this project locally, follow these steps:
+- Core: Python 3.x
+- ML/NLP: scikit‑learn, NLTK, pandas, numpy
+- Dashboard: Streamlit, Plotly, Seaborn, Matplotlib
+- UI Components: streamlit‑shadcn‑ui
 
-1. **Clone the repository**:
+## Installation
 
-   ```bash
-   git clone https://github.com/Piyush-08-bot/fake-news-detection.git
-   cd fake-news-detection
-   ```
+1. Clone the repository:
 
-2. **Install dependencies**:
+```bash
+git clone https://github.com/Piyush-08-bot/fake-news-detection.git
+cd fake-news-detection
+```
 
-   ```bash
-   python3 -m pip install -r requirements.txt
-   ```
+2. Install dependencies:
 
-3. **Install Jupyter (if not already installed)**:
-   ```bash
-   python3 -m pip install ipykernel jupyter
-   ```
+```bash
+python3 -m pip install -r requirements.txt
+```
 
-## 🖥️ Usage
+3. (Optional) Install Jupyter for training and exploration:
 
-### 📊 Using the Dashboard
+```bash
+python3 -m pip install ipykernel jupyter
+```
 
-Launch the Streamlit app to start analyzing news articles:
+## Usage
+
+### Run the Dashboard
 
 ```bash
 python3 -m streamlit run app.py
 ```
 
-### 🧠 Training & Exploration
-
-Open the Jupyter Notebook to explore the training pipeline:
+### Training and Exploration
 
 ```bash
 jupyter notebook News_Credibility_Training.ipynb
 ```
 
-## 🏗️ Project Structure
+## Project Structure
 
-- `app.py`: The main Streamlit dashboard.
-- `News_Credibility_Training.ipynb`: Interactive ML training pipeline.
-- `utils.py`: Text preprocessing and utility functions.
-- `models/`: Saved model and vectorizer serialized files.
-- `data/`: Dataset storage (ignored by git due to size).
+- `app.py` — Streamlit dashboard
+- `News_Credibility_Training.ipynb` — model training pipeline
+- `utils.py` — text preprocessing utilities
+- `models/` — serialized model and vectorizer
+- `data/` — dataset storage (not tracked in git)
 
-## 🌍 Deployment
+## Notes
 
-This project is live! You can visit it here:
+- URL extraction uses `newspaper3k`. Some sites block scraping or return insufficient text.
+- This classifier detects linguistic patterns and does not verify factual truth. Use it as a signal, not a final verdict.
+
+## Deployment
+
+Live demo:
 [fake-news-detection-ml-ai.streamlit.app](https://fake-news-detection-ml-ai.streamlit.app/)
 
----
+## Disclaimer
 
-**Disclaimer**: This tool is for educational purposes and uses linguistic patterns to detect credibility. It does not replace human fact-checking for real-world news events.
+This tool is for educational purposes only. It does not replace professional fact‑checking for real‑world news events.
