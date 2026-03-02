@@ -44,7 +44,6 @@ Bachelor of Technology in Computer Science & Artificial Intelligence
 <div align="left">
 
 🔗 **Live Demo:** [fake-news-detection-ml-ai.streamlit.app](https://fake-news-detection-ml-ai.streamlit.app/)<br>
-📁 **GitHub (Vikash):** [github.com/devVIKASHk/fake-news-detection](https://github.com/devVIKASHk/fake-news-detection)<br>
 📁 **GitHub (Piyush):** [github.com/Piyush-08-bot/fake-news-detection](https://github.com/Piyush-08-bot/fake-news-detection)
 
 </div>
