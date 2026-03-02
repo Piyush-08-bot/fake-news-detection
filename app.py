@@ -9,8 +9,17 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from newspaper import Article
-from utils import preprocess_text
+from utils import preprocess_text, sanitize_text
 import streamlit_shadcn_ui as ui
+import logging
+import re
+from typing import Tuple, Optional, Dict, Any
+from urllib.parse import urlparse
+from requests.exceptions import RequestException, Timeout, ConnectionError
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # Page Config & Initialization
@@ -26,17 +35,88 @@ st.set_page_config(
 if 'page' not in st.session_state:
     st.session_state.page = "Analysis"
 
-def navigate(page_name):
+def navigate(page_name: str) -> None:
+    """Navigate to specified page."""
     st.session_state.page = page_name
 
-@st.cache_resource
-def load_models():
-    # Cache the model so we don't load from disk on every button click
-    model = joblib.load('models/model.pkl')
-    vectorizer = joblib.load('models/vectorizer.pkl')
-    return model, vectorizer
+def is_valid_url(url: str) -> bool:
+    """
+    Validate URL format.
+    
+    Args:
+        url: URL string to validate
+        
+    Returns:
+        True if valid URL, False otherwise
+    """
+    try:
+        if not isinstance(url, str):
+            return False
+        
+        url = url.strip()
+        if not url:
+            return False
+        
+        # Must start with http/https
+        if not url.lower().startswith(('http://', 'https://')):
+            return False
+        
+        result = urlparse(url)
+        return all([result.scheme in ('http', 'https'), result.netloc])
+    except Exception as e:
+        logger.warning(f"URL validation error: {e}")
+        return False
 
-model, vectorizer = load_models()
+@st.cache_resource
+def load_models() -> Tuple[Any, Any]:
+    """
+    Load pre-trained model and vectorizer with error handling.
+    
+    Returns:
+        Tuple of (model, vectorizer)
+        
+    Raises:
+        FileNotFoundError: If model files not found
+        Exception: If model loading fails
+    """
+    try:
+        logger.info("Attempting to load models...")
+        
+        # Check file existence
+        import os
+        model_path = 'models/model.pkl'
+        vectorizer_path = 'models/vectorizer.pkl'
+        
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model file not found: {model_path}")
+        if not os.path.exists(vectorizer_path):
+            raise FileNotFoundError(f"Vectorizer file not found: {vectorizer_path}")
+        
+        # Load models
+        model = joblib.load(model_path)
+        vectorizer = joblib.load(vectorizer_path)
+        
+        if model is None or vectorizer is None:
+            raise ValueError("Loaded models are None")
+        
+        logger.info("Models loaded successfully")
+        return model, vectorizer
+        
+    except FileNotFoundError as e:
+        logger.error(f"Model files not found: {e}")
+        st.error(f"❌ **Model Loading Failed**: {e}")
+        st.stop()
+    except Exception as e:
+        logger.error(f"Failed to load models: {e}")
+        st.error(f"❌ **Critical Error**: Could not initialize the classification model. Please check system logs.")
+        st.stop()
+
+try:
+    model, vectorizer = load_models()
+except Exception as e:
+    logger.critical(f"Fatal error during initialization: {e}")
+    st.error("Application failed to start. Please refresh the page.")
+    st.stop()
 
 # ============================================================
 # Strict Custom CSS (Shadcn Light Theme Only)
@@ -234,11 +314,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
 # ============================================================
 # Plotly Chart Helpers (Minimalist Theme)
 # ============================================================
-def get_plotly_layout(height=300):
+def get_plotly_layout(height: int = 300) -> Dict[str, Any]:
+    """Get standard Plotly layout configuration."""
     return dict(
         height=height,
         margin=dict(l=20, r=20, t=30, b=20),
@@ -247,7 +327,8 @@ def get_plotly_layout(height=300):
         font=dict(family="Inter", color="#374151")
     )
 
-def create_confidence_bar(probs):
+def create_confidence_bar(probs: np.ndarray) -> go.Figure:
+    """Create confidence bar chart from prediction probabilities."""
     fig = go.Figure()
     fig.add_trace(go.Bar(
         y=['Confidence'],
@@ -281,7 +362,8 @@ def create_confidence_bar(probs):
     )
     return fig
 
-def create_pie_chart(probs):
+def create_pie_chart(probs: np.ndarray) -> go.Figure:
+    """Create probability pie chart."""
     fig = go.Figure(data=[go.Pie(
         labels=['Fake / Unreliable', 'Real / Credible'],
         values=[probs[0], probs[1]],
@@ -296,7 +378,8 @@ def create_pie_chart(probs):
     fig.update_layout(showlegend=True, margin=dict(t=20, b=0, l=0, r=0), legend=dict(orientation="h", x=0.5, y=-0.15, xanchor="center"))
     return fig
 
-def create_article_top_words_chart(doc_vector, feature_names):
+def create_article_top_words_chart(doc_vector: Any, feature_names: np.ndarray) -> go.Figure:
+    """Create bar chart of top influential words in article."""
     top_indices = doc_vector.nonzero()[1]
     word_scores = [(feature_names[i], doc_vector[0, i]) for i in top_indices]
     word_scores.sort(key=lambda x: x[1], reverse=True)
@@ -328,7 +411,8 @@ def create_article_top_words_chart(doc_vector, feature_names):
     )
     return fig
 
-def create_confusion_matrix():
+def create_confusion_matrix() -> go.Figure:
+    """Create confusion matrix visualization."""
     z = [[3411, 88], [28, 4203]]
     x = ['Pred Fake', 'Pred Real']
     y = ['Actual Fake', 'Actual Real']
@@ -341,7 +425,8 @@ def create_confusion_matrix():
     fig.update_layout(coloraxis_showscale=False, margin=dict(t=20, b=20, l=20, r=20))
     return fig
 
-def create_distribution_chart():
+def create_distribution_chart() -> go.Figure:
+    """Create dataset distribution chart."""
     fig = go.Figure(data=[go.Bar(
         x=['Real', 'Fake'],
         y=[21417, 17229], # 54.8% Real, 45.2% Fake
@@ -355,7 +440,8 @@ def create_distribution_chart():
     fig.update_xaxes(showgrid=False)
     return fig
 
-def create_feature_importance_chart(model, vectorizer):
+def create_feature_importance_chart(model: Any, vectorizer: Any) -> go.Figure:
+    """Create feature importance visualization."""
     lr = model.named_steps['classifier']
     vocab = model.named_steps['tfidf'].get_feature_names_out()
     coefs = lr.coef_[0]
@@ -399,7 +485,8 @@ _SNS_STYLE = {'axes.facecolor': '#ffffff', 'figure.facecolor': '#ffffff',
                'axes.edgecolor': '#e5e7eb', 'grid.color': '#f3f4f6',
                'axes.spines.top': False, 'axes.spines.right': False}
 
-def create_roc_curve():
+def create_roc_curve() -> plt.Figure:
+    """Create ROC curve visualization."""
     # Hardcoded ROC values derived from training run (AUC = 0.9987)
     fpr = np.array([0.0, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0])
     tpr = np.array([0.0, 0.82, 0.91, 0.96, 0.98, 0.993, 0.997, 0.999, 1.0, 1.0])
@@ -418,7 +505,8 @@ def create_roc_curve():
         plt.tight_layout()
     return fig
 
-def create_length_histogram():
+def create_length_histogram() -> plt.Figure:
+    """Create article length distribution histogram."""
     # Approximate article length distribution based on ISOT dataset characteristics
     np.random.seed(42)
     real_lengths = np.random.gamma(shape=8, scale=60, size=21417)
@@ -435,7 +523,8 @@ def create_length_histogram():
         plt.tight_layout()
     return fig
 
-def create_model_comparison():
+def create_model_comparison() -> plt.Figure:
+    """Create model comparison chart."""
     models   = ['Logistic Regression', 'Decision Tree']
     accuracy = [98.50, 99.71]
     f1       = [98.64, 99.71]
@@ -455,19 +544,19 @@ def create_model_comparison():
         ax.grid(axis='y', color='#f3f4f6', zorder=0)
         ax.legend(fontsize=10, frameon=False)
         # Best model badge
-        ax.annotate('⭐ Best', xy=(1, 99.71), xytext=(1.3, 100.4),
+        ax.annotate('★ Best', xy=(1, 99.71), xytext=(1.3, 100.4),
                     fontsize=9, color='#047857',
                     arrowprops=dict(arrowstyle='->', color='#047857', lw=1.2))
         plt.tight_layout()
     return fig
 
-def create_dataset_top_words():
+def create_dataset_top_words() -> plt.Figure:
+    """Create top words frequency chart."""
     words  = ['said', 'trump', 'president', 'us', 'state', 'reuters', 'people', 'government', 'new', 'would']
     counts = [52341, 48921, 41203, 38102, 36541, 31200, 29887, 28341, 27654, 26102]
     with plt.rc_context(rc=_SNS_STYLE):
         fig, ax = plt.subplots(figsize=(5, 3.8))
-        palette = ['#111827'] * 10
-        sns.barplot(x=counts, y=words, palette=palette, ax=ax, orient='h')
+        sns.barplot(x=counts, y=words, color='#111827', ax=ax, orient='h')
         ax.set_xlabel('Frequency', fontsize=11, color='#374151')
         ax.set_ylabel('')
         ax.tick_params(colors='#6b7280', labelsize=9)
@@ -551,82 +640,142 @@ if st.session_state.page == "Analysis":
             text_input = st.text_area("Article Content", height=200, placeholder="Paste the full text here...", label_visibility="collapsed")
             # Native Streamlit primary button styled via global CSS
             if st.button("Detect Fake News", type="primary", use_container_width=True, key="btn_txt"):
-                if text_input.strip():
-                    article_text = text_input.strip()
-                    analyze_clicked = True
-                else:
-                    st.warning("Please paste some text first.")
+                try:
+                    # Validate and sanitize input
+                    if not text_input or not text_input.strip():
+                        st.warning("⚠️ Please paste some text first.")
+                    elif len(text_input.strip()) < 20:
+                        st.warning("⚠️ Text too short. Please provide at least 20 characters.")
+                    else:
+                        try:
+                            article_text = sanitize_text(text_input.strip())
+                            analyze_clicked = True
+                        except ValueError as e:
+                            st.error(f"❌ Input Error: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Text input error: {e}")
+                    st.error("❌ An unexpected error occurred while processing your text.")
         
         with tab2:
             url_input = st.text_input("Article URL", placeholder="https://news-site.com/article...", label_visibility="collapsed")
             if st.button("Extract and Evaluate", type="primary", use_container_width=True, key="btn_url"):
-                if url_input.strip():
-                    try:
-                        with st.spinner("Fetching content..."):
-                            a = Article(url_input.strip())
-                            a.download()
-                            a.parse()
-                            article_text = a.text
-                        if not article_text or len(article_text) < 50:
-                            st.error("Extraction failed or insufficient text.")
-                        else:
-                            analyze_clicked = True
-                    except:
-                        st.error("Failed to extract URL. Site may block scraping.")
-                else:
-                    st.warning("Enter a URL first.")
+                try:
+                    if not url_input or not url_input.strip():
+                        st.warning("⚠️ Please enter a URL first.")
+                    elif not is_valid_url(url_input):
+                        st.error("❌ **Invalid URL Format**: Please enter a valid URL starting with http:// or https://")
+                    else:
+                        try:
+                            with st.spinner("🔄 Fetching content from URL..."):
+                                article = Article(url_input.strip(), timeout=10)
+                                article.download()
+                                article.parse()
+                                
+                                extracted_text = article.text
+                                if not extracted_text or len(extracted_text.strip()) < 50:
+                                    st.error("❌ **Insufficient Content**: The article has less than 50 characters. The website may not support web scraping, or the article is too short.")
+                                else:
+                                    try:
+                                        article_text = sanitize_text(extracted_text)
+                                        analyze_clicked = True
+                                    except ValueError as e:
+                                        st.error(f"❌ Text Processing Error: {str(e)}")
+                        except Timeout:
+                            logger.error(f"URL fetch timeout: {url_input}")
+                            st.error("❌ **Connection Timeout**: The website took too long to respond. Please try a different URL.")
+                        except ConnectionError as e:
+                            logger.error(f"Connection error for URL {url_input}: {e}")
+                            st.error("❌ **Connection Failed**: Could not connect to the website. Please check the URL and your internet connection.")
+                        except Exception as e:
+                            logger.error(f"URL extraction error: {e}")
+                            error_msg = str(e).lower()
+                            if 'certificate' in error_msg or 'ssl' in error_msg:
+                                st.error("❌ **SSL Certificate Error**: The website has a security certificate issue. Please try a different URL.")
+                            elif '404' in str(e):
+                                st.error("❌ **Page Not Found**: The URL returned a 404 error. Please check the link.")
+                            elif 'robot' in error_msg or 'block' in error_msg:
+                                st.error("❌ **Access Denied**: This website blocks automated content extraction. Please paste the article text directly instead.")
+                            else:
+                                st.error("❌ **Extraction Failed**: Unable to extract content from this URL. You can try pasting the article text directly instead.")
+                except Exception as e:
+                    logger.error(f"Unexpected error in URL processing: {e}")
+                    st.error("❌ An unexpected error occurred while processing the URL.")
 
     # --- Results Section ---
     if analyze_clicked and article_text:
-        with st.spinner("Analyzing linguistic patterns..."):
-            import re
-            
-            # Simple stats
-            word_count = len(article_text.split())
-            char_count = len(article_text)
-            sentences = [s for s in re.split(r'[.!?]+', article_text) if len(s.strip()) > 0]
-            sentence_count = len(sentences)
-            unique_words = len(set(article_text.lower().split()))
-            
-            # NLP pipeline
-            cleaned = preprocess_text(article_text)
-            
-            # Prediction
-            prediction = model.predict([cleaned])[0]
-            probs = model.predict_proba([cleaned])[0] # [prob_fake, prob_real]
-            score = probs[prediction] * 100
-            
-            # Extract features for this specific document
-            tfidf_step = model.named_steps['tfidf']
-            doc_vector = tfidf_step.transform([cleaned])
-            feature_names = tfidf_step.get_feature_names_out()
-            extracted_words = [(feature_names[i], doc_vector[0, i]) for i in doc_vector.nonzero()[1]]
-            extracted_words.sort(key=lambda x: x[1], reverse=True)
-            top_words_str = ", ".join([w[0] for w in extracted_words[:5]]) if extracted_words else "None"
-            
-            # Card Styling Colors
-            if prediction == 1:
-                label = "Real News"
-                bg = "#f0fdf4"
-                border = "#bbf7d0"
-                text_c = "#166534"
-                bar_c = "#10b981"
-            else:
-                label = "Fake / Unreliable"
-                bg = "#fef2f2"
-                border = "#fecaca"
-                text_c = "#991b1b"
-                bar_c = "#ef4444"
+        try:
+            with st.spinner("🔍 Analyzing linguistic patterns..."):
+                # Simple stats
+                word_count = len(article_text.split())
+                char_count = len(article_text)
+                sentences = [s for s in re.split(r'[.!?]+', article_text) if len(s.strip()) > 0]
+                sentence_count = len(sentences)
+                unique_words = len(set(article_text.lower().split()))
                 
-            if score > 90: 
-                conf_text = "Very High Confidence"
-                verdict_text = "The model classifies this as highly reliable." if prediction == 1 else "The model classifies this as heavily manifesting fake/unreliable news patterns."
-            elif score > 70:
-                conf_text = "High Confidence"
-                verdict_text = "The model expects this to be real news." if prediction == 1 else "The model suspects this is fake news."
-            else:
-                conf_text = "Moderate Confidence"
-                verdict_text = "The result is borderline. Please verify with additional sources."
+                # NLP pipeline with error handling
+                try:
+                    cleaned = preprocess_text(article_text)
+                except ValueError as e:
+                    st.error(f"❌ **Preprocessing Error**: {str(e)}")
+                    st.stop()
+                except Exception as e:
+                    logger.error(f"Preprocessing failed: {e}")
+                    st.error("❌ **Text Processing Failed**: Could not process the article text. Please try with different content.")
+                    st.stop()
+                
+                # Prediction with error handling
+                try:
+                    prediction = model.predict([cleaned])[0]
+                    probs = model.predict_proba([cleaned])[0]  # [prob_fake, prob_real]
+                    score = probs[prediction] * 100
+                    
+                    if score < 0 or score > 100:
+                        raise ValueError(f"Invalid confidence score: {score}")
+                except Exception as e:
+                    logger.error(f"Model prediction failed: {e}")
+                    st.error("❌ **Prediction Error**: The model encountered an error during classification. Please try again.")
+                    st.stop()
+                
+                # Extract features for this specific document
+                try:
+                    tfidf_step = model.named_steps['tfidf']
+                    doc_vector = tfidf_step.transform([cleaned])
+                    feature_names = tfidf_step.get_feature_names_out()
+                    extracted_words = [(feature_names[i], doc_vector[0, i]) for i in doc_vector.nonzero()[1]]
+                    extracted_words.sort(key=lambda x: x[1], reverse=True)
+                    top_words_str = ", ".join([w[0] for w in extracted_words[:5]]) if extracted_words else "None"
+                except Exception as e:
+                    logger.error(f"Feature extraction failed: {e}")
+                    top_words_str = "Analysis unavailable"
+                
+                # Card Styling Colors
+                if prediction == 1:
+                    label = "Real News"
+                    bg = "#f0fdf4"
+                    border = "#bbf7d0"
+                    text_c = "#166534"
+                    bar_c = "#10b981"
+                else:
+                    label = "Fake / Unreliable"
+                    bg = "#fef2f2"
+                    border = "#fecaca"
+                    text_c = "#991b1b"
+                    bar_c = "#ef4444"
+                    
+                if score > 90: 
+                    conf_text = "Very High Confidence"
+                    verdict_text = "The model classifies this as highly reliable." if prediction == 1 else "The model classifies this as heavily manifesting fake/unreliable news patterns."
+                elif score > 70:
+                    conf_text = "High Confidence"
+                    verdict_text = "The model expects this to be real news." if prediction == 1 else "The model suspects this is fake news."
+                else:
+                    conf_text = "Moderate Confidence"
+                    verdict_text = "The result is borderline. Please verify with additional sources."
+
+        except Exception as e:
+            logger.error(f"Unexpected error during analysis: {e}")
+            st.error("❌ **Analysis Error**: An unexpected error occurred. Please try again.")
+            st.stop()
 
         st.markdown("<hr style='margin-top: 10px; margin-bottom: 30px;'/>", unsafe_allow_html=True)
         
@@ -696,16 +845,16 @@ if st.session_state.page == "Analysis":
         st.markdown('<div class="section-title">Detailed Detection Report</div>', unsafe_allow_html=True)
         with st.container(border=True):
             # Ensuring there is a pure <div> block explicitly as the first line so Streamlit parses it as raw HTML
-            html_report = f"""<div style="font-size: 15px; line-height: 1.7; color: #374151;">
-<div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">🔎</span> Article Overview:</div>
-<div style="margin-bottom: 24px; padding-left: 28px;">This document contains {word_count:,} words spread across {sentence_count:,} sentences. It was processed using a Term Frequency-Inverse Document Frequency (TF-IDF) embedding matrix.</div>
-<div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
-<div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">📊</span> Key Signals:</div>
-<div style="margin-bottom: 24px; padding-left: 28px;"><ul style="margin: 0; padding-left: 20px; line-height: 2.2;"><li><b>Vocabulary Density:</b> Used {unique_words:,} unique terms.</li><li><b>Primary Influencers:</b> The presence of words like <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #111827; border: 1px solid #e5e7eb; font-size: 13px;">{top_words_str}</span> heavily guided the model's decision path.</li><li><b>Signal Strength:</b> The model is <b>{score:.1f}%</b> confident in distinguishing the linguistic patterns of this text from our baseline knowledge.</li></ul></div>
-<div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
-<div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">⚖️</span> Final Verdict:</div>
-<div style="padding-left: 28px; margin-bottom: 8px;"><b style="font-size: 16px; color: {text_c};">{verdict_text} ({label})</b><br><span style="opacity: 0.6; font-size: 13px; line-height: 1.4; display: inline-block; margin-top: 8px;">Disclaimer: This relies purely on classical NLP patterns (TF-IDF mapping) and may not verify the underlying factual accuracy of real-world events.</span></div>
-</div>"""
+            html_report = f""" <div style="font-size: 15px; line-height: 1.7; color: #374151;">
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">🔎</span> Article Overview:</div>
+                                <div style="margin-bottom: 24px; padding-left: 28px;">This document contains {word_count:,} words spread across {sentence_count:,} sentences. It was processed using a Term Frequency-Inverse Document Frequency (TF-IDF) embedding matrix.</div>
+                                <div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">📊</span> Key Signals:</div>
+                                <div style="margin-bottom: 24px; padding-left: 28px;"><ul style="margin: 0; padding-left: 20px; line-height: 2.2;"><li><b>Vocabulary Density:</b> Used {unique_words:,} unique terms.</li><li><b>Primary Influencers:</b> The presence of words like <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #111827; border: 1px solid #e5e7eb; font-size: 13px;">{top_words_str}</span> heavily guided the model's decision path.</li><li><b>Signal Strength:</b> The model is <b>{score:.1f}%</b> confident in distinguishing the linguistic patterns of this text from our baseline knowledge.</li></ul></div>
+                                <div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">⚖️</span> Final Verdict:</div>
+                                <div style="padding-left: 28px; margin-bottom: 8px;"><b style="font-size: 16px; color: {text_c};">{verdict_text} ({label})</b><br><span style="opacity: 0.6; font-size: 13px; line-height: 1.4; display: inline-block; margin-top: 8px;">Disclaimer: This relies purely on classical NLP patterns (TF-IDF mapping) and may not verify the underlying factual accuracy of real-world events.</span></div>
+                            </div>"""
             st.markdown(html_report, unsafe_allow_html=True)
 
 # ============================================================
@@ -762,7 +911,7 @@ elif st.session_state.page == "Performance":
     </div>
     """, unsafe_allow_html=True)
 
-    # -----------------------------------------------------------------
+# -----------------------------------------------------------------
 # PAGE 3: Classifier Deep Dive
 # -----------------------------------------------------------------
 elif st.session_state.page == "DeepDive":
@@ -897,7 +1046,7 @@ elif st.session_state.page == "NLPInsights":
                     • <b>Grey bars = F1 Score:</b> A balanced metric combining Precision and Recall, crucial for minimizing both false alarms and missed fakes.<br>
                     • <b>Logistic Regression (98.5%):</b> Finds a single linear decision boundary. It's stable, interpretable, and less prone to "memorizing" specific dates or names.<br>
                     • <b>Decision Tree (99.7%):</b> Scores slightly higher, but Decision Trees are notorious for overfitting (learning strict rigid rules that break on entirely new topics).<br>
-                    • <b>⭐ Production Choice:</b> We deploy Logistic Regression because its calculated probabilities are smoother and more reliable for real-world deployment.
+                    • <b>★ Production Choice:</b> We deploy Logistic Regression because its calculated probabilities are smoother and more reliable for real-world deployment.
                 </div>
             </div>
             """, unsafe_allow_html=True)
