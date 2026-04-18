@@ -11,6 +11,15 @@ import seaborn as sns
 from newspaper import Article
 from utils import preprocess_text, sanitize_text
 import streamlit_shadcn_ui as ui
+
+# AI Agent imports (graceful — won't crash if packages missing)
+try:
+    from agent import run_agent_analysis, is_agent_available
+    AGENT_READY = True
+except ImportError:
+    AGENT_READY = False
+    def is_agent_available(): return False
+    def run_agent_analysis(*a, **kw): return {}
 import logging
 import re
 from typing import Tuple, Optional, Dict, Any
@@ -856,6 +865,171 @@ if st.session_state.page == "Analysis":
                                 <div style="padding-left: 28px; margin-bottom: 8px;"><b style="font-size: 16px; color: {text_c};">{verdict_text} ({label})</b><br><span style="opacity: 0.6; font-size: 13px; line-height: 1.4; display: inline-block; margin-top: 8px;">Disclaimer: This relies purely on classical NLP patterns (TF-IDF mapping) and may not verify the underlying factual accuracy of real-world events.</span></div>
                             </div>"""
             st.markdown(html_report, unsafe_allow_html=True)
+
+        # ─────────────────────────────────────────────────────
+        # SECTION 4: AI AGENT ANALYSIS (LangGraph + Groq + Tavily)
+        # ─────────────────────────────────────────────────────
+        st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 40px 0;'/>", unsafe_allow_html=True)
+
+        if AGENT_READY and is_agent_available():
+            st.markdown('<div class="section-title">🧠 AI Agent Analysis</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size: 14px; color: #6b7280; margin-top: -16px; margin-bottom: 24px;">Powered by LangGraph + Groq LLM + Tavily Search</div>', unsafe_allow_html=True)
+
+            with st.spinner("🧠 Running AI Agent pipeline — understanding, reasoning, verifying..."):
+                try:
+                    pred_label = "FAKE" if prediction == 0 else "REAL"
+                    agent_result = run_agent_analysis(article_text, pred_label, score)
+                except Exception as e:
+                    logger.error(f"Agent analysis failed in UI: {e}")
+                    agent_result = None
+
+            if agent_result and agent_result.get("explanation"):
+                # ── Row 1: Tone + Domain + Confidence Level badges ──
+                badge_col1, badge_col2, badge_col3 = st.columns(3)
+
+                tone_icon = {"sensational": "🔥", "neutral": "⚖️", "urgent": "🚨"}.get(agent_result.get("tone", ""), "📝")
+                tone_color = {"sensational": "#dc2626", "neutral": "#059669", "urgent": "#d97706"}.get(agent_result.get("tone", ""), "#6b7280")
+                tone_bg = {"sensational": "#fef2f2", "neutral": "#f0fdf4", "urgent": "#fffbeb"}.get(agent_result.get("tone", ""), "#f9fafb")
+
+                with badge_col1:
+                    with st.container(border=True):
+                        st.markdown(f"""
+                        <div style="text-align: center; padding: 8px 0;">
+                            <div style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Detected Tone</div>
+                            <div style="font-size: 20px; margin-bottom: 4px;">{tone_icon}</div>
+                            <div style="display: inline-block; padding: 4px 12px; background: {tone_bg}; color: {tone_color}; border-radius: 9999px; font-size: 13px; font-weight: 600; text-transform: capitalize;">{agent_result.get('tone', 'unknown')}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                with badge_col2:
+                    with st.container(border=True):
+                        st.markdown(f"""
+                        <div style="text-align: center; padding: 8px 0;">
+                            <div style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">News Domain</div>
+                            <div style="font-size: 20px; margin-bottom: 4px;">🏷️</div>
+                            <div style="display: inline-block; padding: 4px 12px; background: #eff6ff; color: #1d4ed8; border-radius: 9999px; font-size: 13px; font-weight: 600; text-transform: capitalize;">{agent_result.get('domain', 'unknown')}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                with badge_col3:
+                    with st.container(border=True):
+                        conf_level = agent_result.get('confidence_level', 'unknown')
+                        conf_icon = {"high": "🟢", "moderate": "🟡", "uncertain": "🔴"}.get(conf_level, "⚪")
+                        conf_color = {"high": "#059669", "moderate": "#d97706", "uncertain": "#dc2626"}.get(conf_level, "#6b7280")
+                        conf_bg = {"high": "#f0fdf4", "moderate": "#fffbeb", "uncertain": "#fef2f2"}.get(conf_level, "#f9fafb")
+                        st.markdown(f"""
+                        <div style="text-align: center; padding: 8px 0;">
+                            <div style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">AI Confidence</div>
+                            <div style="font-size: 20px; margin-bottom: 4px;">{conf_icon}</div>
+                            <div style="display: inline-block; padding: 4px 12px; background: {conf_bg}; color: {conf_color}; border-radius: 9999px; font-size: 13px; font-weight: 600; text-transform: capitalize;">{conf_level}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # ── AI Explanation Card ──
+                with st.container(border=True):
+                    st.markdown(f"""
+                    <div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">💡</span> AI-Powered Analysis
+                    </div>
+                    <div style="font-size: 14px; color: #374151; line-height: 1.9; padding-left: 4px;">
+                        {agent_result.get('explanation', 'No analysis available.')}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # ── Verification Results (if performed) ──
+                verification = agent_result.get('verification_result', '')
+                source_links = agent_result.get('source_links', [])
+
+                if verification and 'not required' not in verification.lower() and 'not needed' not in verification.lower():
+                    with st.container(border=True):
+                        st.markdown(f"""
+                        <div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 16px;">🔍</span> Web Verification
+                        </div>
+                        <div style="font-size: 14px; color: #374151; line-height: 1.7; margin-bottom: 16px;">
+                            {verification}
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        if source_links:
+                            links_html = ''.join([
+                                f'<a href="{url}" target="_blank" style="display: inline-block; margin: 4px 6px 4px 0; padding: 4px 10px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; color: #2563eb; text-decoration: none; transition: all 0.2s;">{url[:60]}...</a>'
+                                for url in source_links[:5]
+                            ])
+                            st.markdown(f"""
+                            <div style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Sources Checked</div>
+                            <div style="display: flex; flex-wrap: wrap;">{links_html}</div>
+                            """, unsafe_allow_html=True)
+
+                # ── Final AI Verdict Card ──
+                ai_verdict = agent_result.get('final_verdict', '')
+                is_fake = agent_result.get('ml_prediction') == "FAKE"
+                verdict_bg = "#fef2f2" if is_fake else "#f0fdf4"
+                verdict_border = "#fecaca" if is_fake else "#bbf7d0"
+                verdict_color = "#991b1b" if is_fake else "#166534"
+
+                st.markdown(f"""
+                <div style="background: {verdict_bg}; border: 1px solid {verdict_border}; border-radius: 12px; padding: 20px 24px; margin-top: 8px;">
+                    <div style="font-size: 20px; font-weight: 700; color: {verdict_color}; letter-spacing: -0.015em;">
+                        {ai_verdict}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # ── Related News (only for REAL predictions) ──
+                related = agent_result.get('related_news', [])
+                if related and not is_fake:
+                    st.markdown('<div class="section-title" style="margin-top: 32px;">📰 Related News from Credible Sources</div>', unsafe_allow_html=True)
+
+                    for i, article in enumerate(related[:5]):
+                        with st.container(border=True):
+                            st.markdown(f"""
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 6px;">{article.get('title', 'Untitled')}</div>
+                                    <div style="font-size: 13px; color: #6b7280; line-height: 1.6;">{article.get('summary', '')}</div>
+                                </div>
+                                <a href="{article.get('url', '#')}" target="_blank" style="flex-shrink: 0; display: inline-block; padding: 6px 14px; background: #111827; color: #ffffff; border-radius: 6px; font-size: 12px; font-weight: 500; text-decoration: none; white-space: nowrap;">Read →</a>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                elif agent_result.get('ml_prediction') == "REAL" and not related:
+                    st.markdown("""
+                    <div style="font-size: 14px; color: #6b7280; padding: 16px; text-align: center; background: #f9fafb; border-radius: 8px; margin-top: 16px;">
+                        No reliable related news found at this time.
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            else:
+                st.warning("⚠️ The AI Agent could not complete the analysis. The ML-based results above remain valid.")
+
+        elif not AGENT_READY:
+            # Packages not installed
+            with st.container(border=True):
+                st.markdown("""
+                <div style="text-align: center; padding: 24px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🧠</div>
+                    <div style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 8px;">AI Agent Not Installed</div>
+                    <div style="font-size: 14px; color: #6b7280; line-height: 1.6;">
+                        Install the agent dependencies to enable AI-powered analysis:<br>
+                        <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-size: 13px;">pip install langgraph langchain-groq tavily-python python-dotenv</code>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        else:
+            # Keys not configured
+            with st.container(border=True):
+                st.markdown("""
+                <div style="text-align: center; padding: 24px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🔑</div>
+                    <div style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 8px;">Configure API Keys for AI Analysis</div>
+                    <div style="font-size: 14px; color: #6b7280; line-height: 1.6;">
+                        Copy <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">.env.example</code> to <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">.env</code> and add your API keys.<br>
+                        <span style="font-size: 13px;">Get free keys: <a href="https://console.groq.com" target="_blank" style="color: #2563eb;">Groq</a> · <a href="https://tavily.com" target="_blank" style="color: #2563eb;">Tavily</a></span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
 # ============================================================
 # PAGE 2: Model Performance View
