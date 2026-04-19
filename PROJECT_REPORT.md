@@ -432,8 +432,8 @@ Overall, this project provided profound hands-on experience bridging the gap bet
 
 | Name | Enrollment No. | Contributions |
 |:---|:---:|:---|
-| **Vikash Kumar** | 2401010503 | Dataset collection, text preprocessing pipeline (`utils.py`), ML model training notebook, foundational AI Agent LangGraph integration & orchestration architecture. |
-| **Piyush Raj** | 2401010328 | Backend application logic, integrating the trained model with the Streamlit dashboard (`app.py`), LangGraph node algorithms (Highlights, Claim Breakdown, Tavily Tool Use), Session State architecture handling. |
+| **Vikash Kumar** | 2401010503 | Dataset collection, text preprocessing pipeline (`utils.py`), ML model training notebook, complete Phase 2 Agentic AI layer — LangGraph state-machine orchestration (`graph.py`), node algorithms (Highlights, Claim Breakdown, Tavily Tool Use) (`nodes.py`), Groq & Tavily integration (`tools.py`, `config.py`). |
+| **Piyush Raj** | 2401010328 | Backend application logic, integrating the trained model with the Streamlit dashboard (`app.py`), AI Agent UI rendering, Session State architecture handling, comparison tool & follow-up Q&A interface. |
 | **Mohammed Yaseen** | 2401010281 | Exploratory Data Analysis, model evaluation and comparison, writing and organising the academic project report. |
 | **Sankalp M Tellur** | 2401010416 | Frontend UI design and development, GitHub repository setup, deployment to Streamlit Cloud, integration testing and QA. |
 
