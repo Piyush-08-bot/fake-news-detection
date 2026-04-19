@@ -805,7 +805,8 @@ if st.session_state.page == "Analysis":
                 st.session_state['bar_c'] = bar_c
                 st.session_state['conf_text'] = conf_text
                 st.session_state['verdict_text'] = verdict_text
-                # Clear stale follow-up/comparison from previous analysis
+                # Clear stale data from previous analysis to force a fresh run
+                st.session_state.pop('agent_result', None)
                 st.session_state.pop('followup_answer', None)
                 st.session_state.pop('followup_question', None)
                 st.session_state.pop('comparison_result', None)
