@@ -40,11 +40,14 @@ This project delivers an end-to-end classification and explanation workflow. It 
 
 ---
 
-## 🗺️ Visual Architecture
+## 🎯 The Problem We Solve
 
-The flowchart below illustrates exactly how data flows from user input through the machine learning pipeline, through the AI agent, and finally to the dashboard interface.
+In an era of rapid information spread, determining the credibility of news is increasingly difficult. While classical models can detect vocabulary patterns associated with clickbait, they fail to provide **explainability** or **fact-checking**. 
 
-![Visual Architecture Diagram](https://kroki.io/mermaid/svg/eNp9lXtv2jwUh__fpzhStWnTyrZyGVn0bhPlVlZKWwKtXkXV5CQnYGHiyHbasnbffbYxMArMApTLOc_5-VzMRJB8CqPWK9Dr9WsI1ILRbAIJpjSjivJM2lcxI1K2MIVCooCUMuYfYRm99NOxVILP0D_6XK1Xvcjdlh5ooqZ-OX88jjnjwj_6lJ7Uy2QbNmcOlURIUlyjKpFXTj8fRJ1ghXgvUGSCmXK0tKKFpWsa8Wq1tH6QVvNOYq--TVOcM7mixVhPK2saxlXvy5eDNK9y4lUrL3JGV9uMDWyNKpfjWg0Pb7Naq5STV6vSjKYIHcYf7H3jbTg2lehleaF8GOGjAi5gPOzfvfN931apVPoGp6F9dSUwFzxGKU1xP0KTIcn05Z22nTNLtD-yiCa2I5pGO40Jg4s-XNEcdVegNTHr1LKb4ahT6rU6cIOx4oL-IqZf_kKa1bSmrbDPJ1QqGsMQJ8Lo4JkLkuowexxb1rH9ZOILTGhsbHzoNM7bZqfDdqP_e-OBmUtU27g9N3mW0gSzGCGIuUB4_xfkGTphzzQ3UQh9kk26dsuNHjRMExkdtpv2pMUa2E0QyU0C4ZaLWbqqilkdq7sbDniCPoyzBIVUJEtggA8S_ovEx28w4hnCG2jxOaEZtB-VIPEqBZvQZnUt7czRzuhkyvRXQVDInMaUF3JZ-yW3yWg8iwhVxzAWhnMM7Tk3ZMJ22WeW3XPs5ZZAf3TGLwul-2pF3SSzfU9YQfZL7VncD4c7FUhmCX-wVaZzuWu_vvhhHc-fblDQdOHsv__ecTi3pf0f5TP0XZRbjMC6uR5yiu8pgRG5p2xhwtphfkEZ8Ge4cJBgRvMtyj-09q3WgfPsYobCdFGX8UjPSvsxZyQ7wLhYuu4yB_bF5dOmQ-HrV9vge5JwuUnClVPRQRVPdf2YVpKsamZYEUNoCN2vDOVuIi7XibgOG7pBFpJKXet5zlDhrvwrq_J6e9rMP4Yb5kCZRAT6INB-9uW19RiGbwNyr4UwpjXKgimpj1eY45yLhVMr1Qe5xPyUBvPuzp1h6yjjnnY2s6Rnzj4bWngQLp_ChRmkFpHTiBORWHe6Z357mUI7a1rQWFGmDwHcZCSA0gcNHYUmC0RskqcHlu8ZIGc_Djuc6SOgVORw_aYBzSlRu8YjYww3YWAOA8LMCaBPnGUkKpcNs12gsfW4feGhI2ybmmL8AfCxV4E=)
+This engine solves that by treating classical ML as a lightning-fast "triage" step, and an AI Agent as the "investigator". It provides users with extreme transparency, letting them see exactly which phrases are suspicious, which claims are unverified, and what trusted web sources actually say.
+
+> **Want a deep dive into the technical system?**  
+> 🔗 **[Read the full visual architecture & workflow guide here!](./project_architecture.md)**
 
 ---
 
