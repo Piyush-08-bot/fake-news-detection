@@ -713,6 +713,8 @@ if st.session_state.page == "Analysis":
                     st.error("❌ An unexpected error occurred while processing the URL.")
 
     # --- Results Section ---
+    # When the user clicks "Detect Fake News", compute everything and save to session_state.
+    # This ensures results persist across Streamlit re-runs (e.g., when Compare/FollowUp buttons are clicked).
     if analyze_clicked and article_text:
         try:
             with st.spinner("🔍 Analyzing linguistic patterns..."):
@@ -783,10 +785,56 @@ if st.session_state.page == "Analysis":
                     conf_text = "Moderate Confidence"
                     verdict_text = "The result is borderline. Please verify with additional sources."
 
+                # ── Persist ALL results to session_state ──
+                st.session_state['analysis_done'] = True
+                st.session_state['article_text'] = article_text
+                st.session_state['prediction'] = prediction
+                st.session_state['probs'] = probs
+                st.session_state['score'] = score
+                st.session_state['word_count'] = word_count
+                st.session_state['char_count'] = char_count
+                st.session_state['sentence_count'] = sentence_count
+                st.session_state['unique_words'] = unique_words
+                st.session_state['top_words_str'] = top_words_str
+                st.session_state['doc_vector'] = doc_vector
+                st.session_state['feature_names'] = feature_names
+                st.session_state['label'] = label
+                st.session_state['bg'] = bg
+                st.session_state['border'] = border
+                st.session_state['text_c'] = text_c
+                st.session_state['bar_c'] = bar_c
+                st.session_state['conf_text'] = conf_text
+                st.session_state['verdict_text'] = verdict_text
+                # Clear stale follow-up/comparison from previous analysis
+                st.session_state.pop('followup_answer', None)
+                st.session_state.pop('followup_question', None)
+                st.session_state.pop('comparison_result', None)
+
         except Exception as e:
             logger.error(f"Unexpected error during analysis: {e}")
             st.error("❌ **Analysis Error**: An unexpected error occurred. Please try again.")
             st.stop()
+
+    # ── Restore variables from session_state (for re-runs triggered by Compare/FollowUp) ──
+    if st.session_state.get('analysis_done'):
+        article_text = st.session_state['article_text']
+        prediction = st.session_state['prediction']
+        probs = st.session_state['probs']
+        score = st.session_state['score']
+        word_count = st.session_state['word_count']
+        char_count = st.session_state['char_count']
+        sentence_count = st.session_state['sentence_count']
+        unique_words = st.session_state['unique_words']
+        top_words_str = st.session_state['top_words_str']
+        doc_vector = st.session_state['doc_vector']
+        feature_names = st.session_state['feature_names']
+        label = st.session_state['label']
+        bg = st.session_state['bg']
+        border = st.session_state['border']
+        text_c = st.session_state['text_c']
+        bar_c = st.session_state['bar_c']
+        conf_text = st.session_state['conf_text']
+        verdict_text = st.session_state['verdict_text']
 
         st.markdown("<hr style='margin-top: 10px; margin-bottom: 30px;'/>", unsafe_allow_html=True)
         
@@ -891,18 +939,22 @@ if st.session_state.page == "Analysis":
             </style>
             """, unsafe_allow_html=True)
 
-            try:
-                pred_label = "FAKE" if prediction == 0 else "REAL"
-                agent_result = run_agent_analysis(article_text, pred_label, score)
-            except Exception as e:
-                logger.error(f"Agent analysis failed in UI: {e}")
-                agent_result = None
+            # Only run the heavy LLM pipeline if we haven't done it yet
+            if 'agent_result' in st.session_state and st.session_state['agent_result']:
+                agent_result = st.session_state['agent_result']
+            else:
+                try:
+                    pred_label = "FAKE" if prediction == 0 else "REAL"
+                    agent_result = run_agent_analysis(article_text, pred_label, score)
+                except Exception as e:
+                    logger.error(f"Agent analysis failed in UI: {e}")
+                    agent_result = None
 
-            # Clear the live banner once analysis is done
+            # Clear the live banner once analysis is done (or if cached)
             agent_status_placeholder.empty()
 
             if agent_result and agent_result.get("explanation"):
-                # Store result in session state for follow-up Q&A
+                # Always ensure it is saved
                 st.session_state['agent_result'] = agent_result
 
                 # ── Section Header ──
