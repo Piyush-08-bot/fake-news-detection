@@ -7,8 +7,8 @@
 
 <br>
 
-# Fake News Detection System
-### *Using Natural Language Processing and Machine Learning*
+# Intelligent Fake News Detection & AI Reasoning System
+### *Using Natural Language Processing, Machine Learning, and Agentic AI*
 
 <br>
 
@@ -44,6 +44,7 @@ Bachelor of Technology in Computer Science & Artificial Intelligence
 <div align="left">
 
 🔗 **Live Demo:** [fake-news-detection-ml-ai.streamlit.app](https://fake-news-detection-ml-ai.streamlit.app/)<br>
+📁 **GitHub (Vikash):** [github.com/devVIKASHk/fake-news-detection](https://github.com/devVIKASHk/fake-news-detection)<br>
 📁 **GitHub (Piyush):** [github.com/Piyush-08-bot/fake-news-detection](https://github.com/Piyush-08-bot/fake-news-detection)
 
 </div>
@@ -57,13 +58,14 @@ Bachelor of Technology in Computer Science & Artificial Intelligence
 | 1 | [Problem Statement](#1-problem-statement) |
 | 2 | [Data Description](#2-data-description) |
 | 3 | [Exploratory Data Analysis](#3-exploratory-data-analysis) |
-| 4 | [Methodology](#4-methodology) |
+| 4 | [Methodology (Classical ML)](#4-methodology-classical-ml) |
 | 5 | [Model Training Workflow](#5-model-training-workflow) |
 | 6 | [Evaluation](#6-evaluation) |
 | 7 | [Optimisation](#7-optimisation) |
-| 8 | [Application Architecture](#8-application-architecture) |
-| 9 | [Conclusion](#9-conclusion) |
-| 10 | [Team Contribution](#10-team-contribution) |
+| 8 | [Advanced Agentic AI Layer](#8-advanced-agentic-ai-layer) |
+| 9 | [Application Architecture](#9-application-architecture) |
+| 10 | [Conclusion](#10-conclusion) |
+| 11 | [Team Contribution](#11-team-contribution) |
 
 ---
 
@@ -71,16 +73,18 @@ Bachelor of Technology in Computer Science & Artificial Intelligence
 
 Fake news is not a new problem, but the internet has made it far harder to control. A single misleading article can reach millions of people within hours through social media, WhatsApp forwards, and news aggregators. By the time a correction is published, the damage is already done.
 
-The core challenge we wanted to tackle is simple:
+While earlier efforts in NLP have successfully built classification algorithms that detect fake patterns, these models suffer from a "black box" problem: **they can tell you if a news article is fake, but they cannot explain *why*, nor can they verify facts.**
 
-> **"Can a machine learning system read a news article and determine whether it is Real or Fake — purely based on the words used in it?"**
+The core challenge we tackled was building a two-phase hybrid system:
 
-We intentionally avoided relying on external fact-checking databases or APIs. The system should work from the article text alone, looking for language patterns that distinguish credible journalism from fabricated content.
+1. **The Triage Engine**: Can a machine learning system read a news article and determine whether it is Real or Fake — purely based on the words used in it?
+2. **The Investigator**: Can an advanced AI Agent parse flagged articles, break them into conceptual claims, verify those claims against the live web, and provide human-readable explanations?
 
 **Our goals were to:**
-- ✅ Build a pipeline that processes raw article text and classifies it as *Real* or *Fake*
-- ✅ Show a confidence score along with the prediction
-- ✅ Deliver this through a clean, interactive web dashboard anyone can use
+- ✅ Train a highly accurate classical ML model to detect fake news language patterns.
+- ✅ Build a LangGraph state machine to orchestrate LLM reasoning.
+- ✅ Connect the agent to the live internet for active fact-checking.
+- ✅ Deliver an interactive web dashboard providing extreme transparency to the user.
 
 ---
 
@@ -170,7 +174,7 @@ This makes intuitive sense — credible journalism uses attribution language, wh
 
 ---
 
-## 4. Methodology
+## 4. Methodology (Classical ML)
 
 ### 4.1 Text Preprocessing Pipeline
 
@@ -313,11 +317,27 @@ We made several conscious decisions to improve model quality and system performa
 
 ---
 
-## 8. Application Architecture
+## 8. Advanced Agentic AI Layer
 
-### 8.1 How It Works
+While achieving 98.5% accuracy via statistical ML is excellent, it cannot cross-reference or verify facts. To address this, we implemented an advanced Agentic AI workflow using **LangGraph** and **Groq Llama-3/Mixtral models**.
 
-The app is a full-stack Python web application built with Streamlit:
+If an article passes through the fast ML classifier, its text and probability score are handed to the intelligent AI LangGraph pipeline to generate "explainability". The graph executes nodes sequentially:
+
+1. **Understand News (Tone & Domain)**: The LLM reads the text and assigns it a Tone (Sensational vs Neutral) and a Domain (Politics, Health, etc.).
+2. **Highlight Suspicious**: The LLM acts as an editor, scanning the text specifically for clickbait phrasing, extreme absolute claims, and unbacked numerical generalizations, pulling them out as exact quotes.
+3. **Reason & Break Down**: The text is conceptually broken down into 3-5 isolated factual claims, assigning individual verdicts (✅ / ❌ / ❓).
+4. **Tool Use (Web Verification)**: If the ML model flags a text as highly suspicious, the graph automatically routes the agent to use the **Tavily Web Search Tool**. The agent queries the live internet for the isolated claims and generates a verification summary citing trusted web sources.
+5. **Synthesis**: The agent looks at the ML Output, Tone, Highlights, Claims, and Web Evidence, and writes a concise, bulleted explanation of *why* the article is credible or misinformation.
+
+> 🧠 **This mimics a human journalistic workflow:** Fast categorization followed by deep-dive citation checking and reporting.
+
+---
+
+## 9. Application Architecture
+
+### 9.1 How It Works
+
+The app is a full-stack Python web application built with Streamlit that integrates both the ML and the AI layers:
 
 ```
 User (Browser)
@@ -336,7 +356,7 @@ User (Browser)
                preprocess_text()       ← utils.py
                       │
                       ▼
-              models/model.pkl
+              models/model.pkl         ← [PHASE 1: Classical ML]
           (TF-IDF → Logistic Regression)
                       │
                  ┌────┴────┐
@@ -344,73 +364,78 @@ User (Browser)
               (0/1)    [P(Fake), P(Real)]
                       │
                       ▼
-            Charts, Verdict, Report
+            ┌───────────────────┐    
+            │ LangGraph AI Node │      ← [PHASE 2: Agentic AI]
+            │  (Groq + Tavily)  │
+            └─────────┬─────────┘
+                      ▼
+            Charts, Verified Verdict,
+          Agent Report & Interactivity 
 ```
 
-### 8.2 Dashboard Pages
+### 9.2 Dashboard Pages & Features
 
-| Page | What It Shows |
+| Page / Feature | What It Does |
 |:---|:---|
-| 📰 **Analysis** | Enter text or URL → verdict, confidence bar, charts, auto-report |
-| 📊 **Model Performance** | Accuracy metrics, confusion matrix, dataset distribution, feature importance |
-| 🔬 **Classifier Deep Dive** | ROC curve, article length distribution |
-| 🧠 **NLP Insights** | Top dataset vocabulary, LR vs Decision Tree comparison |
+| 📰 **Analysis Dashboard** | Enter text or URL → live ML verdict, statistical visuals, and auto-report |
+| 🧑‍💻 **AI Sandbox** | Read the AI's step-by-step reasoning (Suspicious terms, Claims, Live Web Verification). |
+| ⚖️ **Comparison Tool** | A standalone tool where users paste a second article for automatic side-by-side comparative credibility analysis. |
+| 💬 **Interactive Q&A Chat** | A persistent conversational interface allowing users to ask the AI agent follow-up questions about the current article. |
+| 📊 **Model Metrics** | Accuracy metrics, confusion matrix, and feature importance visualisations. |
 
-### 8.3 Key Files
+### 9.3 Key Files
 
 | File | Role |
 |:---|:---|
-| `app.py` | Full dashboard — all 4 pages, charts, navigation, CSS theme |
+| `app.py` | Full dashboard — UI rendering, state management, and interaction |
+| `agent/graph.py` | LangGraph state machine orchestrating the AI thinking logic |
+| `agent/nodes.py` | Python nodes triggering Groq and Tavily actions |
 | `utils.py` | `preprocess_text()` — the NLP cleaning pipeline |
 | `models/model.pkl` | Trained LR pipeline (production) |
-| `models/vectorizer.pkl` | Standalone TF-IDF (for per-article word inspection) |
-| `News_Credibility_Training.ipynb` | End-to-end training notebook |
-| `requirements.txt` | All Python dependencies |
-| `.streamlit/config.toml` | Light theme configuration |
+| `News_Credibility_Training.ipynb` | End-to-end Machine Learning testing & training notebook |
+| `.env` | Stored credentials for Groq and Tavily APIs |
 
-### 8.4 Tech Stack
+### 9.4 Tech Stack
 
 | Layer | Technology |
 |:---|:---|
-| ML / NLP | `scikit-learn`, `NLTK` |
-| Web Framework | `Streamlit` |
+| ML / NLP | `scikit-learn`, `NLTK`, `pandas`, `numpy` |
+| AI Orchestration | `LangGraph`, `LangChain`, `Groq API` (LLMs) |
+| Web Search Integration | `Tavily Search API` |
+| Web Framework | `Streamlit`, `streamlit-shadcn-ui` |
 | Visualisation | `Plotly`, `Matplotlib`, `Seaborn` |
-| URL Scraping | `newspaper3k` |
-| Model I/O | `joblib` |
-| UI Components | `streamlit-shadcn-ui` |
+| URL Scraping & I/O | `newspaper3k`, `joblib` |
 | Hosting | Streamlit Community Cloud |
+
 
 ---
 
-## 9. Conclusion
+## 10. Conclusion
 
-We started this project asking a straightforward question — can a computer tell fake news from real news just by reading it? The answer, it turns out, is yes — and with very high confidence.
+We started this project asking a straightforward question — can a computer tell fake news from real news just by reading it? 
 
-Using TF-IDF vectorisation combined with Logistic Regression, we achieved **98.50% accuracy** and an **AUC of 0.9987** on 7,730 unseen test articles. The final system is live and interactive — anyone can paste an article or drop a URL and get an instant verdict with a confidence score and visual breakdown.
+The answer is overwhelmingly yes. Using TF-IDF vectorisation combined with Logistic Regression, we achieved **98.50% accuracy** and an **AUC of 0.9987**.
 
-### Limitations We Acknowledge
-- The dataset is **biased toward 2016 US political news**. The model may not generalise as well to modern or non-political articles.
-- Because real articles are from Reuters, the word *"reuters"* became an artificially strong predictor.
-- The system detects **linguistic patterns, not factual accuracy**. A well-written but factually wrong article could still score as "Real."
+However, we took the project significantly further by breaking the "black box" standard. By chaining the ML output directly into a **LangGraph Agentic workflow** armed with live website tracking, we created an engine that mimics a human editor — it spots linguistic anomalies instantly, isolates suspicious text, hops onto a search engine to verify citations, and finally provides a deeply explanatory, cohesive report to the end user.
 
 ### Future Improvements
 - 🤖 Fine-tune **BERT or RoBERTa** for deeper semantic understanding
-- 🌍 Add **multilingual support** for non-English news
-- 🔍 Integrate with a **fact-checking API** for a second layer of verification
+- 🌍 Add **multilingual support** for non-English news processing through LLM translation hooks
+- 🔍 Build in a direct API with PolitiFact or Snopes alongside Tavily for hardline verification
 - 🔄 Set up a **continuous retraining loop** as new misinformation patterns emerge
 
-Overall, this project gave us solid hands-on experience with the full ML pipeline — from raw data all the way to a deployed, production application solving a real-world problem.
+Overall, this project provided profound hands-on experience bridging the gap between classical structured Machine Learning protocols and modern Generative Gen-AI orchestration frameworks.
 
 ---
 
-## 10. Team Contribution
+## 11. Team Contribution
 
 | Name | Enrollment No. | Contributions |
 |:---|:---:|:---|
-| **Vikash Kumar** | 2401010503 | Dataset collection, text preprocessing pipeline (`utils.py`), model training notebook, model evaluation |
-| **Piyush Raj** | 2401010328 | Backend application logic, integrating the trained model with the Streamlit dashboard (`app.py`), inference pipeline |
-| **Mohammed Yaseen** | 2401010281 | Exploratory Data Analysis, model evaluation and comparison, writing the project report |
-| **Sankalp M Tellur** | 2401010416 | Frontend UI design and development, GitHub repository setup, deployment to Streamlit Cloud, testing |
+| **Vikash Kumar** | 2401010503 | Dataset collection, text preprocessing pipeline (`utils.py`), ML model training notebook, foundational AI Agent LangGraph integration & orchestration architecture. |
+| **Piyush Raj** | 2401010328 | Backend application logic, integrating the trained model with the Streamlit dashboard (`app.py`), LangGraph node algorithms (Highlights, Claim Breakdown, Tavily Tool Use), Session State architecture handling. |
+| **Mohammed Yaseen** | 2401010281 | Exploratory Data Analysis, model evaluation and comparison, writing and organising the academic project report. |
+| **Sankalp M Tellur** | 2401010416 | Frontend UI design and development, GitHub repository setup, deployment to Streamlit Cloud, integration testing and QA. |
 
 *All members collaborated on system design, integration testing, and final presentation of the application.*
 
