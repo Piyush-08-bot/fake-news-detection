@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
-# Load .env from project root
+
 load_dotenv()
 
 # ── API Keys ──────────────────────────────────────────────────
