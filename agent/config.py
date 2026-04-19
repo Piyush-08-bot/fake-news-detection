@@ -6,12 +6,25 @@ from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
-
+# Load .env from project root (for local development)
 load_dotenv()
 
+
+def _get_secret(key: str) -> str:
+    """Read a secret from os.getenv first, then fall back to st.secrets."""
+    value = os.getenv(key, "")
+    if value:
+        return value
+    try:
+        import streamlit as st
+        return st.secrets.get(key, "")
+    except Exception:
+        return ""
+
+
 # ── API Keys ──────────────────────────────────────────────────
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+GROQ_API_KEY = _get_secret("GROQ_API_KEY")
+TAVILY_API_KEY = _get_secret("TAVILY_API_KEY")
 
 # ── Model Config ──────────────────────────────────────────────
 GROQ_MODEL = "llama-3.3-70b-versatile"

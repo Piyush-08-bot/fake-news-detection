@@ -1,4 +1,5 @@
 # agent/nodes.py — LangGraph node functions for the AI analysis pipeline
+from __future__ import annotations
 
 import json
 import logging

@@ -859,66 +859,8 @@ if st.session_state.page == "Analysis":
         </div>
         """, unsafe_allow_html=True)
         
-        # -----------------------------------------------------------------
-        # SECTION 2: VISUAL ANALYTICS (Balanced 2-Column Grid)
-        # -----------------------------------------------------------------
-        st.markdown('<div class="section-title">Visual Analytics</div>', unsafe_allow_html=True)
-        
-        # ROW 1: Confidence Division & Probability Breakdown
-        row1_col1, row1_col2 = st.columns([1.2, 1])
-        with row1_col1:
-            with st.container(border=True):
-                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Confidence Division</div>', unsafe_allow_html=True)
-                st.plotly_chart(create_confidence_bar(probs), use_container_width=True, config={'displayModeBar': False})
-        
-        with row1_col2:
-            with st.container(border=True):
-                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Probability Breakdown</div>', unsafe_allow_html=True)
-                st.plotly_chart(create_pie_chart(probs), use_container_width=True, config={'displayModeBar': False})
-        
-        # ROW 2: Top Words & Article Statistics
-        row2_col1, row2_col2 = st.columns([1.2, 1])
-        with row2_col1:
-            with st.container(border=True):
-                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Top 10 Influential Words in this Article</div>', unsafe_allow_html=True)
-                st.plotly_chart(create_article_top_words_chart(doc_vector, feature_names), use_container_width=True, config={'displayModeBar': False})
-                
-        with row2_col2:
-            with st.container(border=True):
-                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Article Statistics</div>', unsafe_allow_html=True)
-                
-                # 2x2 Grid for Article Statistics to balance vertical height against the Top Words chart
-                stat_col1, stat_col2 = st.columns(2)
-                with stat_col1:
-                    ui.metric_card(title="Word Count", content=f"{word_count:,}", description="Total words", key="grid_stats_1")
-                    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
-                    ui.metric_card(title="Sentences", content=f"{sentence_count:,}", description="Syntactic splits", key="grid_stats_3")
-                with stat_col2:
-                    ui.metric_card(title="Unique Words", content=f"{unique_words:,}", description="Vocabulary richness", key="grid_stats_2")
-                    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
-                    ui.metric_card(title="Characters", content=f"{char_count:,}", description="Document length", key="grid_stats_4")
-
-        # -----------------------------------------------------------------
-        # SECTION 3: AUTO-GENERATED MINI REPORT
-        # -----------------------------------------------------------------
-        st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 40px 0;'/>", unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Detailed Detection Report</div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            # Ensuring there is a pure <div> block explicitly as the first line so Streamlit parses it as raw HTML
-            html_report = f""" <div style="font-size: 15px; line-height: 1.7; color: #374151;">
-                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">🔎</span> Article Overview:</div>
-                                <div style="margin-bottom: 24px; padding-left: 28px;">This document contains {word_count:,} words spread across {sentence_count:,} sentences. It was processed using a Term Frequency-Inverse Document Frequency (TF-IDF) embedding matrix.</div>
-                                <div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
-                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">📊</span> Key Signals:</div>
-                                <div style="margin-bottom: 24px; padding-left: 28px;"><ul style="margin: 0; padding-left: 20px; line-height: 2.2;"><li><b>Vocabulary Density:</b> Used {unique_words:,} unique terms.</li><li><b>Primary Influencers:</b> The presence of words like <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #111827; border: 1px solid #e5e7eb; font-size: 13px;">{top_words_str}</span> heavily guided the model's decision path.</li><li><b>Signal Strength:</b> The model is <b>{score:.1f}%</b> confident in distinguishing the linguistic patterns of this text from our baseline knowledge.</li></ul></div>
-                                <div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
-                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">⚖️</span> Final Verdict:</div>
-                                <div style="padding-left: 28px; margin-bottom: 8px;"><b style="font-size: 16px; color: {text_c};">{verdict_text} ({label})</b><br><span style="opacity: 0.6; font-size: 13px; line-height: 1.4; display: inline-block; margin-top: 8px;">Disclaimer: This relies purely on classical NLP patterns (TF-IDF mapping) and may not verify the underlying factual accuracy of real-world events.</span></div>
-                            </div>"""
-            st.markdown(html_report, unsafe_allow_html=True)
-
         # ─────────────────────────────────────────────────────
-        # SECTION 4: AI AGENT ANALYSIS (LangGraph + Groq + Tavily)
+        # SECTION 2: AI AGENT ANALYSIS (LangGraph + Groq + Tavily)
         # ─────────────────────────────────────────────────────
         st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 40px 0;'/>", unsafe_allow_html=True)
 
@@ -1006,7 +948,7 @@ if st.session_state.page == "Analysis":
                             reason = h.get("reason", "")
                             color, bg, border_c = cat_styles.get(cat, ("#6b7280", "#f9fafb", "#e5e7eb"))
                             cat_icon = {"clickbait": "🔴", "urgency": "🟠", "emotional": "🟣", "absolute": "🔵", "numeric": "💜"}.get(cat, "⚪")
-                            pills_html += f'<div style="display:inline-flex;align-items:center;gap:6px;margin:4px 6px 4px 0;padding:6px 12px;background:{bg};border:1px solid {border_c};border-radius:8px;font-size:13px;color:{color};cursor:default;transition:all 0.2s;" title="{reason}"><span>{cat_icon}</span><span style="font-weight:600;">\"{text}\"</span><span style="color:#9ca3af;font-size:11px;text-transform:uppercase;">{cat}</span></div>'
+                            pills_html += f'<div style="display:inline-flex;align-items:center;gap:6px;margin:4px 6px 4px 0;padding:6px 12px;background:{bg};border:1px solid {border_c};border-radius:8px;font-size:13px;color:{color};cursor:default;transition:all 0.2s;" title="{reason}"><span>{cat_icon}</span><span style="font-weight:600;">\\"{text}\\"</span><span style="color:#9ca3af;font-size:11px;text-transform:uppercase;">{cat}</span></div>'
 
                         st.markdown(f'<div style="display:flex;flex-wrap:wrap;gap:2px;">{pills_html}</div>', unsafe_allow_html=True)
                         st.markdown('<div style="font-size:11px;color:#9ca3af;margin-top:12px;">💡 Hover over a pill to see why it was flagged</div>', unsafe_allow_html=True)
@@ -1170,6 +1112,65 @@ if st.session_state.page == "Analysis":
         else:
             with st.container(border=True):
                 st.markdown('<div style="text-align:center;padding:24px;"><div style="font-size:32px;margin-bottom:12px;">🔑</div><div style="font-size:16px;font-weight:600;color:#111827;margin-bottom:8px;">Configure API Keys for AI Analysis</div><div style="font-size:14px;color:#6b7280;line-height:1.6;">Copy <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">.env.example</code> to <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">.env</code> and add your API keys.<br><span style="font-size:13px;">Get free keys: <a href="https://console.groq.com" target="_blank" style="color:#2563eb;">Groq</a> · <a href="https://tavily.com" target="_blank" style="color:#2563eb;">Tavily</a></span></div></div>', unsafe_allow_html=True)
+
+        # -----------------------------------------------------------------
+        # SECTION 3: VISUAL ANALYTICS (Balanced 2-Column Grid)
+        # -----------------------------------------------------------------
+        st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 40px 0;'/>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Visual Analytics</div>', unsafe_allow_html=True)
+        
+        # ROW 1: Confidence Division & Probability Breakdown
+        row1_col1, row1_col2 = st.columns([1.2, 1])
+        with row1_col1:
+            with st.container(border=True):
+                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Confidence Division</div>', unsafe_allow_html=True)
+                st.plotly_chart(create_confidence_bar(probs), use_container_width=True, config={'displayModeBar': False})
+        
+        with row1_col2:
+            with st.container(border=True):
+                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Probability Breakdown</div>', unsafe_allow_html=True)
+                st.plotly_chart(create_pie_chart(probs), use_container_width=True, config={'displayModeBar': False})
+        
+        # ROW 2: Top Words & Article Statistics
+        row2_col1, row2_col2 = st.columns([1.2, 1])
+        with row2_col1:
+            with st.container(border=True):
+                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Top 10 Influential Words in this Article</div>', unsafe_allow_html=True)
+                st.plotly_chart(create_article_top_words_chart(doc_vector, feature_names), use_container_width=True, config={'displayModeBar': False})
+                
+        with row2_col2:
+            with st.container(border=True):
+                st.markdown('<div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 16px;">Article Statistics</div>', unsafe_allow_html=True)
+                
+                # 2x2 Grid for Article Statistics to balance vertical height against the Top Words chart
+                stat_col1, stat_col2 = st.columns(2)
+                with stat_col1:
+                    ui.metric_card(title="Word Count", content=f"{word_count:,}", description="Total words", key="grid_stats_1")
+                    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+                    ui.metric_card(title="Sentences", content=f"{sentence_count:,}", description="Syntactic splits", key="grid_stats_3")
+                with stat_col2:
+                    ui.metric_card(title="Unique Words", content=f"{unique_words:,}", description="Vocabulary richness", key="grid_stats_2")
+                    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+                    ui.metric_card(title="Characters", content=f"{char_count:,}", description="Document length", key="grid_stats_4")
+
+        # -----------------------------------------------------------------
+        # SECTION 4: AUTO-GENERATED MINI REPORT (moved to bottom)
+        # -----------------------------------------------------------------
+        st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 40px 0;'/>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Detailed Detection Report</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            # Ensuring there is a pure <div> block explicitly as the first line so Streamlit parses it as raw HTML
+            html_report = f""" <div style="font-size: 15px; line-height: 1.7; color: #374151;">
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">🔎</span> Article Overview:</div>
+                                <div style="margin-bottom: 24px; padding-left: 28px;">This document contains {word_count:,} words spread across {sentence_count:,} sentences. It was processed using a Term Frequency-Inverse Document Frequency (TF-IDF) embedding matrix.</div>
+                                <div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">📊</span> Key Signals:</div>
+                                <div style="margin-bottom: 24px; padding-left: 28px;"><ul style="margin: 0; padding-left: 20px; line-height: 2.2;"><li><b>Vocabulary Density:</b> Used {unique_words:,} unique terms.</li><li><b>Primary Influencers:</b> The presence of words like <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #111827; border: 1px solid #e5e7eb; font-size: 13px;">{top_words_str}</span> heavily guided the model's decision path.</li><li><b>Signal Strength:</b> The model is <b>{score:.1f}%</b> confident in distinguishing the linguistic patterns of this text from our baseline knowledge.</li></ul></div>
+                                <div style="height: 1px; background-color: #f3f4f6; margin: 24px 0;"></div>
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span style="font-size: 16px;">⚖️</span> Final Verdict:</div>
+                                <div style="padding-left: 28px; margin-bottom: 8px;"><b style="font-size: 16px; color: {text_c};">{verdict_text} ({label})</b><br><span style="opacity: 0.6; font-size: 13px; line-height: 1.4; display: inline-block; margin-top: 8px;">Disclaimer: This relies purely on classical NLP patterns (TF-IDF mapping) and may not verify the underlying factual accuracy of real-world events.</span></div>
+                            </div>"""
+            st.markdown(html_report, unsafe_allow_html=True)
 
 # ============================================================
 # PAGE 2: Model Performance View

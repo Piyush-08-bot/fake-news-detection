@@ -22,7 +22,7 @@ At its core, this project is a hybrid system designed to combat misinformation. 
 ### Machine Learning Layer
 * **Scikit-Learn**: Powers the classical ML pipeline.
 * **TF-IDF Vectorizer**: Converts plain text words into mathematical vectors based on word frequency and uniqueness.
-* **Logistic Regression**: The classification algorithm that decides if the vectors look like "Real" or "Fake" news based on prior training.
+* **Logistic Regression**: The classification algorithm that decides if the vectors look like "Real" or "Fake" news b ased on prior training.
 
 ### Agentic AI Layer
 * **LangGraph**: An orchestration framework that manages the complex multi-step "thinking" process of the AI agent.
